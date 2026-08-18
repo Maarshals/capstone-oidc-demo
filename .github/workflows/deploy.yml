@@ -1,4 +1,4 @@
-name: Deploy CDK Stack via OIDC
+﻿name: Deploy CDK Stack via OIDC
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  id-token: write   # required to request the OIDC token
+  id-token: write
   contents: read
 
 jobs:
@@ -15,6 +15,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Debug OIDC token claims
+        run: |
+          TOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+          echo "$TOKEN" | cut -d '.' -f2 | base64 -d 2>/dev/null | jq .
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
